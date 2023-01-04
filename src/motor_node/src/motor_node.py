@@ -35,6 +35,8 @@ class MachineDesJeuxProtocol(LineReader):
     READ_MOVE_END_CFG_CMD = 7
     WRITE_SERVO_AXIS_CFG_CMD = 8
     READ_SERVO_AXIS_CFG_CMD = 9
+    OPEN_CLAMP_CMD = 10
+    CLOSE_CLAMP_CMD = 11
 
     def connection_made(self, transport):
         super().connection_made(transport)
@@ -74,6 +76,18 @@ class MachineDesJeuxProtocol(LineReader):
         TODO add limits 
         """
         self.write_line(f'{self.MOVE_CMD},{axis1},{axis2},{axis3},{axis4},{axis5},{axis6}')
+
+    def open_clamp(self):
+        """
+        Sends serial command to open the clamp.
+        """
+        self.write_line(f'{self.OPEN_CLAMP_CMD}')
+
+    def close_clamp(self):
+        """
+        Sends serial command to close the clamp.
+        """
+        self.write_line(f'{self.CLOSE_CLAMP_CMD}')
 
     def stop_movement(self):
         """
@@ -159,7 +173,10 @@ def callback(data, protocol):
     elif val == 9:
         protocol.read_servo_cfg()
     elif val == 10:
-        protocol.move_abs_angle(0,0,0,-135,0,-150)
+        protocol.open_clamp()
+    elif val == 11:
+        protocol.close_clamp()
+
 
 def machine_path_handler(protocol):     
     # Start computing of commands here and write on serial bus when new data is available

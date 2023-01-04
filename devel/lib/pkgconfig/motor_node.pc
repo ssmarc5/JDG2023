@@ -1,0 +1,8 @@
+prefix=/home/itr/JDG2023/devel
+
+Name: motor_node
+Description: Description of motor_node
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
