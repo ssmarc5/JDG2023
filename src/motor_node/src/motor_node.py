@@ -156,7 +156,7 @@ class MachineDesJeuxProtocol(LineReader):
         """
         Envoie vitesse des moteurs des 4 roues
         """
-        self.write_line(f'{wheel1},{wheel2},{wheel3},{wheel4}')
+        self.write_line(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}')
 
 def callback(data, protocol):
     #print(str(data))
