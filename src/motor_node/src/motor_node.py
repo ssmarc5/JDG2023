@@ -3,22 +3,23 @@ import serial
 from serial.threaded import LineReader, ReaderThread
 import time
 import rospy
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int16MultiArray
 
 # Port names need to be defined in function of arduino names
-ARDUINO_PORT = '/dev/ttyACM0'
+MCU_PORT = '/dev/ttyTHS1'
+BAUD_RATE = 115200
 
-MENU = "\nPick a command(number) to send to Machine Des Jeux\n\n\
-\t1. Send an absolute target angle position of 180 degrees\n\
-\t2. Send a 90 angle increase command relative to current position \n\
-\t3. Stop the current movement as soon as possible while respecting configured acceleration \n\
-\t4. Write a new speed/acceleration configuration for stepper motors in EEPROM memory \n\
-\t5. Read the current speed/acceleration configuration for stepper motors from EEPROM memory \n\
-\t6. Write a new movement threshold configuration for both steppers and servos \n\
-\t7. Read the current threshold configuration\n\
-\t8. Write a new speed/acceleration configuration for servo motors in EEPROM memory \n\
-\t9. Read the current speed/acceleration configuration for servo motors from EEPROM memory \n\
-"
+#MENU = "\nPick a command(number) to send to Machine Des Jeux\n\n\
+#\t1. Send an absolute target angle position of 180 degrees\n\
+#\t2. Send a 90 angle increase command relative to current position \n\
+#\t3. Stop the current movement as soon as possible while respecting configured acceleration \n\
+#\t4. Write a new speed/acceleration configuration for stepper motors in EEPROM memory \n\
+#\t5. Read the current speed/acceleration configuration for stepper motors from EEPROM memory \n\
+#\t6. Write a new movement threshold configuration for both steppers and servos \n\
+#\t7. Read the current threshold configuration\n\
+#\t8. Write a new speed/acceleration configuration for servo motors in EEPROM memory \n\
+#\t9. Read the current speed/acceleration configuration for servo motors from EEPROM memory \n\
+#"
 
 class MachineDesJeuxProtocol(LineReader):
     """
@@ -151,52 +152,61 @@ class MachineDesJeuxProtocol(LineReader):
         """
         self.write_line('{self.READ_SERVO_AXIS_CFG_CMD}')
 
+    def wheel_set_speed(self, wheel1, wheel2, wheel3, wheel4):
+        """
+        Envoie vitesse des moteurs des 4 roues
+        """
+        self.write_line(f'{wheel1},{wheel2},{wheel3},{wheel4}')
+
 def callback(data, protocol):
-    print(str(data))
-    val, axis1, axis2, axis3, axis4, axis5, axis6 = data.data
-    if val == 1:
-        protocol.move_abs_angle(axis1, axis2, axis3, axis4, axis5, axis6)
-    elif val == 2:
-        protocol.move_relative_angle(axis1, axis2, axis3, axis4, axis5, axis6)
-    elif val == 3:
-        protocol.stop_movement()
-    elif val == 4:
-        protocol.write_stepper_cfg(15,15,60,60,60,60)
-    elif val == 5:
-        protocol.read_stepper_cfg()
-    elif val == 6:
-        protocol.write_move_threshold_config(5,5)
-    elif val == 7:
-        protocol.read_move_threshold_config()
-    elif val == 8:
-        protocol.write_servo_cfg(120,120,120,120,120,120)
-    elif val == 9:
-        protocol.read_servo_cfg()
-    elif val == 10:
-        protocol.open_clamp()
-    elif val == 11:
-        protocol.close_clamp()
+    #print(str(data))
+    #val, axis1, axis2, axis3, axis4, axis5, axis6 = data.data
+    #if val == 1:
+    #    protocol.move_abs_angle(axis1, axis2, axis3, axis4, axis5, axis6)
+    #elif val == 2:
+    #    protocol.move_relative_angle(axis1, axis2, axis3, axis4, axis5, axis6)
+    #elif val == 3:
+    #    protocol.stop_movement()
+    #elif val == 4:
+    #    protocol.write_stepper_cfg(15,15,60,60,60,60)
+    #elif val == 5:
+    #    protocol.read_stepper_cfg()
+    #elif val == 6:
+    #    protocol.write_move_threshold_config(5,5)
+    #elif val == 7:
+    #    protocol.read_move_threshold_config()
+    #elif val == 8:
+    #    protocol.write_servo_cfg(120,120,120,120,120,120)
+    #elif val == 9:
+    #    protocol.read_servo_cfg()
+    #elif val == 10:
+    #    protocol.open_clamp()
+    #elif val == 11:
+    #    protocol.close_clamp()
+    wheel1, wheel2, wheel3, wheel4 = data.data
+    print(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}')
+    protocol.wheel_set_speed(wheel1, wheel2, wheel3, wheel4)
 
 
 def machine_path_handler(protocol):     
     # Start computing of commands here and write on serial bus when new data is available
     # subscribed to joystick inputs on topic "joy"
-    rospy.Subscriber("control/motorCmd", Int32MultiArray, callback, protocol)
+    rospy.Subscriber("control/motorCmd", Int16MultiArray, callback, protocol)
     # starts the node
     # rospy.init_node('motor_node')
     rospy.spin()
 
 if __name__ == '__main__':
-    rospy.init_node('motor_node') 
+    rospy.init_node('motor_node')
     # Open the serial port
     while True:
         try:
             global port
-            port = serial.Serial(ARDUINO_PORT, 115200)
+            port = serial.Serial(MCU_PORT, BAUD_RATE)
             break
         except serial.serialutil.SerialException as e:
-            print("pod_node: Serial port" + str(ARDUINO_PORT) + "couldn't be opened:\n" + str(e))
+            print("pod_node: Serial port" + str(MCU_PORT) + "couldn't be opened:\n" + str(e))
             time.sleep(3)
 
-    with ReaderThread(port, MachineDesJeuxProtocol) as protocol:  
+    with ReaderThread(port, MachineDesJeuxProtocol) as protocol:
         machine_path_handler(protocol)
