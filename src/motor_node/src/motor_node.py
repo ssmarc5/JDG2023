@@ -186,12 +186,13 @@ def callback(data, protocol):
     wheel1, wheel2, wheel3, wheel4 = data.data
     print(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}')
     protocol.wheel_set_speed(wheel1, wheel2, wheel3, wheel4)
+    rospy.sleep(0.5)
 
 
 def machine_path_handler(protocol):     
     # Start computing of commands here and write on serial bus when new data is available
     # subscribed to joystick inputs on topic "joy"
-    rospy.Subscriber("control/motorCmd", Int16MultiArray, callback, protocol)
+    rospy.Subscriber("control/motorCmd", Int16MultiArray, callback, protocol, queue_size=1)
     # starts the node
     # rospy.init_node('motor_node')
     rospy.spin()
