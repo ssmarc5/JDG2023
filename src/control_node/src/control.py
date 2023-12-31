@@ -19,6 +19,22 @@ CUSTOM_CMD = 20
 MIN_SPEED = -100
 MAX_SPEED = 100
 
+BUTTON_ID_A = 0;
+BUTTON_ID_B = 1;
+BUTTON_ID_X = 2;
+BUTTON_ID_Y = 3;
+BUTTON_ID_LB = 4;
+BUTTON_ID_RB = 5;
+AXIS_ID_LEFT_RIGHT_CROSS = -2;
+AXIS_ID_UP_DOWN_CROSS = -1;
+
+BUTTON_RELEASED = 0
+BUTTON_PRESSED = 1
+CROSS_LEFT_PRESSED = 1
+CROSS_RIGHT_PRESSED = -1
+CROSS_UP_PRESSED = 1
+CROSS_DOWN_PRESSED = -1
+
 
 # This ROS Node converts Joystick inputs from the joy node
 # into commands for turtlesim or any other robot
@@ -85,7 +101,37 @@ def callback(data):
         
     #mode = int(MOVE_CMD)
     #cmd.data = [mode, axe1, axe2, axe3, axe4, axe5, axe6]
-    cmd.data = [wheel1, wheel2, wheel3, wheel4]
+    if data.buttons[BUTTON_ID_A] == 1:
+        speed = 0
+        cmd.data = [speed, speed, speed, speed]
+
+    elif data.buttons[BUTTON_ID_X] == BUTTON_PRESSED:
+        speed = 25
+        cmd.data = [speed, speed, speed, speed]
+
+    elif data.buttons[BUTTON_ID_Y] == BUTTON_PRESSED:
+        speed = 50
+        cmd.data = [speed, speed, speed, speed]
+
+    elif data.buttons[BUTTON_ID_B] == BUTTON_PRESSED:
+        speed = 75
+        cmd.data = [speed, speed, speed, speed]
+
+    elif data.axes[AXIS_ID_LEFT_RIGHT_CROSS] == CROSS_LEFT_PRESSED:
+        speed = -25
+        cmd.data = [speed, speed, speed, speed]
+
+    elif data.axes[AXIS_ID_UP_DOWN_CROSS] == CROSS_UP_PRESSED:
+        speed = -50
+        cmd.data = [speed, speed, speed, speed]
+
+    elif data.axes[AXIS_ID_LEFT_RIGHT_CROSS] == CROSS_RIGHT_PRESSED:
+        speed = -75
+        cmd.data = [speed, speed, speed, speed]
+
+    #else:
+        #cmd.data = [wheel1, wheel2, wheel3, wheel4] #FIXME
+
     pub.publish(cmd)
 
 # Intializes everything
