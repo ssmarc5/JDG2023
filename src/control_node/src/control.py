@@ -62,33 +62,35 @@ def callback(data):
     rot =  data.axes[AXIS_ID_R_STICK_X]
 
     angle = m.atan2(y, x)# % (2 * m.pi) # FIXME necessaire?
-    speed = m.hypot(x, y)
     offset = m.pi / 4
+    speed = m.hypot(x, y)
 
     sin = m.sin(angle - offset)
     cos = m.cos(angle - offset)
-    #max = get_max2(m.abs(sin), m.abs(cos)) # FIXME: pas necessaire
+    max = get_max(abs(sin), abs(cos))
 
-    # Ce facteur de correction limite la puissance maximale à 1
-    if speed + m.abs(rot) > 1:
-        correction = 1 / (speed + m.abs(rot))
+    if speed + abs(rot) > 1:
+        correction = 1 / (speed + abs(rot))
     else:
         correction = 1
 
-    #wheel1_raw = (speed * cos / max - rot) * correction # avant-gauche
-    #wheel2_raw = (speed * sin / max + rot) * correction # avant-droite
-    #wheel3_raw = (speed * cos / max + rot) * correction # arriere-droite
-    #wheel4_raw = (speed * sin / max - rot) * correction # arriere-gauche
+    wheel = (speed * cos + rot) * correction
 
     wheel1_raw = (speed * cos - rot) * correction # avant-gauche
     wheel2_raw = (speed * sin + rot) * correction # avant-droite
     wheel3_raw = (speed * cos + rot) * correction # arriere-droite
-    wheel4_raw = (speed * sin - rot) * correction # arriere-gauche
+    wheel4_raw = (speed * sin - rot) * correction # arriere-gauches
+
+    #wheel1 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
+    #wheel2 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
+    #wheel3 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
+    #wheel4 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
 
     wheel1 = map_range(wheel1_raw, -1, 1, MIN_SPEED, MAX_SPEED)
     wheel2 = map_range(wheel2_raw, -1, 1, MIN_SPEED, MAX_SPEED)
     wheel3 = map_range(wheel3_raw, -1, 1, MIN_SPEED, MAX_SPEED)
     wheel4 = map_range(wheel4_raw, -1, 1, MIN_SPEED, MAX_SPEED)
+
     #axe4 = map_range(data.axes[4],-1,1,30,-30)
     #axe6 = map_range(data.axes[5],-1,1,30,0)
     #seuil = 20
@@ -137,35 +139,36 @@ def callback(data):
     #mode = int(MOVE_CMD)
     #cmd.data = [mode, axe1, axe2, axe3, axe4, axe5, axe6]
     if data.buttons[BUTTON_ID_A] == 1:
-        speed = 0
+        wheel1 = 20
         send_button_cmd = True
     elif data.buttons[BUTTON_ID_X] == BUTTON_PRESSED:
-        speed = 25
+        wheel2 = 20
         send_button_cmd = True
     elif data.buttons[BUTTON_ID_Y] == BUTTON_PRESSED:
-        speed = 50
+        wheel3 = 20
         send_button_cmd = True
     elif data.buttons[BUTTON_ID_B] == BUTTON_PRESSED:
-        speed = 75
+        wheel4 = 20
         send_button_cmd = True
-    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_LEFT_PRESSED:
-        speed = -25
-        send_button_cmd = True
-    elif data.axes[AXIS_ID_CROSS_UP_DOWN] == CROSS_UP_PRESSED:
-        speed = -50
-        send_button_cmd = True
-    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_RIGHT_PRESSED:
-        speed = -75
-        send_button_cmd = True
+#    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_LEFT_PRESSED:
+#        speed = -25
+#        send_button_cmd = True
+#    elif data.axes[AXIS_ID_CROSS_UP_DOWN] == CROSS_UP_PRESSED:
+#        speed = -50
+#        send_button_cmd = True
+#    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_RIGHT_PRESSED:
+#        speed = -75
+#        send_button_cmd = True
     else:
         send_button_cmd = False
 
-    if send_button_cmd:
-        cmd.data = [speed, speed, speed, speed] #FIXME
-    else:
-        cmd.data = [wheel1, wheel2, wheel3, wheel4]
+#    if send_button_cmd:
+#        cmd.data = [speed, speed, speed, speed] #FIXME
+#    else:
+#        cmd.data = [wheel1, wheel2, wheel3, wheel4]
 
-    #pub.publish(cmd) # FIXME uncomment
+    cmd.data = [wheel1, wheel2, wheel3, wheel4]
+    pub.publish(cmd)
 
 # Intializes everything
 def start():
