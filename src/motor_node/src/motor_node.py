@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import serial
-from serial.threaded import LineReader, ReaderThread
+#from serial.threaded import LineReader, ReaderThread
 import time
 import rospy
 from std_msgs.msg import Int16MultiArray
@@ -21,7 +21,7 @@ BAUD_RATE = 115200
 #\t9. Read the current speed/acceleration configuration for servo motors from EEPROM memory \n\
 #"
 
-class MachineDesJeuxProtocol(LineReader):
+class Protocol:
     """
     Implement a protocol for reading & writing serial data from/to arduino. 
     This protocol must be used by the ReaderThread class in conjunction
@@ -39,126 +39,127 @@ class MachineDesJeuxProtocol(LineReader):
     OPEN_CLAMP_CMD = 10
     CLOSE_CLAMP_CMD = 11
 
-    def connection_made(self, transport):
-        super().connection_made(transport)
-        self.name = self.transport.serial.name
-        print("Serial port" + self.name + "successfully opened!")
+#    def connection_made(self, transport):
+#        super().connection_made(transport)
+#        self.name = self.transport.serial.name
+#        print("Serial port" + self.name + "successfully opened!")
+#
+#    def handle_line(self, data):
+#        """ 
+#        Process data received from arduino
+#        """
+#        print("data received was:\n{data}")
+#        try:
+#            if data.isnumeric() and int(data) == 69:
+#                pass
+#        except Exception:
+#            pass
+#
+#    def connection_lost(self, exc):
+#        """
+#        Function called when port is closed unexpectedly or context exits
+#        """
+#        if exc:
+#            print("Serial port" + self.name + "lost connection!")
+#
+#    def move_abs_angle(self, axis1, axis2, axis3, axis4, axis5, axis6):
+#        """
+#        Sends serial command to reach absolute angles targets given 
+#        as parameters. Angles in degrees
+#        TODO add limits 
+#        """
+#        self.write_line(f'{self.TARGET_CMD},{axis1},{axis2},{axis3},{axis4},{axis5},{axis6}')
+#    
+#    def move_relative_angle(self, axis1, axis2, axis3, axis4, axis5, axis6):
+#        """
+#        Sends serial command to reach relative (to current position)
+#        angles targets given as parameters. Angles in degrees.
+#        TODO add limits 
+#        """
+#        self.write_line(f'{self.MOVE_CMD},{axis1},{axis2},{axis3},{axis4},{axis5},{axis6}')
+#
+#    def open_clamp(self):
+#        """
+#        Sends serial command to open the clamp.
+#        """
+#        self.write_line(f'{self.OPEN_CLAMP_CMD}')
+#
+#    def close_clamp(self):
+#        """
+#        Sends serial command to close the clamp.
+#        """
+#        self.write_line(f'{self.CLOSE_CLAMP_CMD}')
+#
+#    def stop_movement(self):
+#        """
+#        Sends serial command to stop current movement of all 6 axis. Servo
+#        axis will slow down and comeback to reach the position where the axis
+#        was when the stop signal was sent. Stepper will decelerate and stop.
+#        """
+#        self.write_line('{self.STOP_CMD}')
+#    
+#    def write_stepper_cfg(self, max_speed_axis1, accel_axis1,
+#                                max_speed_axis2, accel_axis2,
+#                                max_speed_axis3, accel_axis3):
+#        """
+#        Sends serial command configure the max speed and acceleration of
+#        stepper motors. Those config are also written to EEPROM, allowing
+#        the Arduino to use them when it reboots. If using a new arduino
+#        device, this function should be called before sending commands.
+#        Parameters are in deg/seconds
+#        """
+#        self.write_line('{self.WRITE_STEP_AXIS_CFG_CMD},{max_speed_axis1},{accel_axis1},\
+#                            {max_speed_axis2},{accel_axis2},{max_speed_axis3},{accel_axis3}')
+#
+#    def read_stepper_cfg(self):
+#        """
+#        Send serial command to read the configured stepper speed/accel currently written to memory.
+#        """
+#        self.write_line('{self.READ_STEP_AXIS_CFG_CMD}')
+#
+#    def write_move_threshold_config(self, stepper_threshold, servo_threshold):
+#        """
+#        Send serial command to configure the threshold after which the axis movement is considered
+#        completed. This will influence the moment when you receive the movement completion from
+#        the arduino. The higher the threshold, the sooner the arduino considers de movement done.
+#        The stepper threshold is in motor steps and the servo threshold is in microseconds. Both
+#        have a maximum value of 255.
+#        """
+#        self.write_line('{self.WRITE_MOVE_END_CFG_CMD},{stepper_threshold},{servo_threshold}')
+#    
+#    def read_move_threshold_config(self):
+#        """
+#        Send serial command to read the configured thresholds currently written to memory.
+#        """
+#        self.write_line('{self.READ_MOVE_END_CFG_CMD}')
+#
+#    def write_servo_cfg(self, max_speed_axis4, accel_axis4,
+#                                max_speed_axis5, accel_axis5,
+#                                max_speed_axis6, accel_axis6):
+#        """
+#        Sends serial command configure the max speed and acceleration of
+#        servo motors. Those config are also written to EEPROM, allowing
+#        the Arduino to use them when it reboots. If using a new arduino
+#        device, this function should be called before sending commands.
+#        Parameters are in deg/seconds
+#        """
+#        self.write_line('{self.WRITE_SERVO_AXIS_CFG_CMD},{max_speed_axis4},{accel_axis4},\
+#                            {max_speed_axis5},{accel_axis5},{max_speed_axis6},{accel_axis6}')
+#
+#    def read_servo_cfg(self):
+#        """
+#        Send serial command to read the configured servo speed/accel currently written to memory.
+#        """
+#        self.write_line('{self.READ_SERVO_AXIS_CFG_CMD}')
 
-    def handle_line(self, data):
-        """ 
-        Process data received from arduino
-        """
-        print("data received was:\n{data}")
-        try:
-            if data.isnumeric() and int(data) == 69:
-                pass
-        except Exception:
-            pass
-
-    def connection_lost(self, exc):
-        """
-        Function called when port is closed unexpectedly or context exits
-        """
-        if exc:
-            print("Serial port" + self.name + "lost connection!")
-
-    def move_abs_angle(self, axis1, axis2, axis3, axis4, axis5, axis6):
-        """
-        Sends serial command to reach absolute angles targets given 
-        as parameters. Angles in degrees
-        TODO add limits 
-        """
-        self.write_line(f'{self.TARGET_CMD},{axis1},{axis2},{axis3},{axis4},{axis5},{axis6}')
-    
-    def move_relative_angle(self, axis1, axis2, axis3, axis4, axis5, axis6):
-        """
-        Sends serial command to reach relative (to current position)
-        angles targets given as parameters. Angles in degrees.
-        TODO add limits 
-        """
-        self.write_line(f'{self.MOVE_CMD},{axis1},{axis2},{axis3},{axis4},{axis5},{axis6}')
-
-    def open_clamp(self):
-        """
-        Sends serial command to open the clamp.
-        """
-        self.write_line(f'{self.OPEN_CLAMP_CMD}')
-
-    def close_clamp(self):
-        """
-        Sends serial command to close the clamp.
-        """
-        self.write_line(f'{self.CLOSE_CLAMP_CMD}')
-
-    def stop_movement(self):
-        """
-        Sends serial command to stop current movement of all 6 axis. Servo
-        axis will slow down and comeback to reach the position where the axis
-        was when the stop signal was sent. Stepper will decelerate and stop.
-        """
-        self.write_line('{self.STOP_CMD}')
-    
-    def write_stepper_cfg(self, max_speed_axis1, accel_axis1,
-                                max_speed_axis2, accel_axis2,
-                                max_speed_axis3, accel_axis3):
-        """
-        Sends serial command configure the max speed and acceleration of
-        stepper motors. Those config are also written to EEPROM, allowing
-        the Arduino to use them when it reboots. If using a new arduino
-        device, this function should be called before sending commands.
-        Parameters are in deg/seconds
-        """
-        self.write_line('{self.WRITE_STEP_AXIS_CFG_CMD},{max_speed_axis1},{accel_axis1},\
-                            {max_speed_axis2},{accel_axis2},{max_speed_axis3},{accel_axis3}')
-
-    def read_stepper_cfg(self):
-        """
-        Send serial command to read the configured stepper speed/accel currently written to memory.
-        """
-        self.write_line('{self.READ_STEP_AXIS_CFG_CMD}')
-
-    def write_move_threshold_config(self, stepper_threshold, servo_threshold):
-        """
-        Send serial command to configure the threshold after which the axis movement is considered
-        completed. This will influence the moment when you receive the movement completion from
-        the arduino. The higher the threshold, the sooner the arduino considers de movement done.
-        The stepper threshold is in motor steps and the servo threshold is in microseconds. Both
-        have a maximum value of 255.
-        """
-        self.write_line('{self.WRITE_MOVE_END_CFG_CMD},{stepper_threshold},{servo_threshold}')
-    
-    def read_move_threshold_config(self):
-        """
-        Send serial command to read the configured thresholds currently written to memory.
-        """
-        self.write_line('{self.READ_MOVE_END_CFG_CMD}')
-
-    def write_servo_cfg(self, max_speed_axis4, accel_axis4,
-                                max_speed_axis5, accel_axis5,
-                                max_speed_axis6, accel_axis6):
-        """
-        Sends serial command configure the max speed and acceleration of
-        servo motors. Those config are also written to EEPROM, allowing
-        the Arduino to use them when it reboots. If using a new arduino
-        device, this function should be called before sending commands.
-        Parameters are in deg/seconds
-        """
-        self.write_line('{self.WRITE_SERVO_AXIS_CFG_CMD},{max_speed_axis4},{accel_axis4},\
-                            {max_speed_axis5},{accel_axis5},{max_speed_axis6},{accel_axis6}')
-
-    def read_servo_cfg(self):
-        """
-        Send serial command to read the configured servo speed/accel currently written to memory.
-        """
-        self.write_line('{self.READ_SERVO_AXIS_CFG_CMD}')
-
-    def wheel_set_speed(self, wheel1, wheel2, wheel3, wheel4):
+    def wheel_set_speed(wheel1, wheel2, wheel3, wheel4):
         """
         Envoie vitesse des moteurs des 4 roues
         """
-        self.write_line(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}')
+        #self.write_line(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}')
+        port.write(bytes(f"{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}", "ascii"))
 
-def callback(data, protocol):
+def callback(data):
     #print(str(data))
     #val, axis1, axis2, axis3, axis4, axis5, axis6 = data.data
     #if val == 1:
@@ -184,18 +185,13 @@ def callback(data, protocol):
     #elif val == 11:
     #    protocol.close_clamp()
     wheel1, wheel2, wheel3, wheel4 = data.data
-    print(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}')
-    protocol.wheel_set_speed(wheel1, wheel2, wheel3, wheel4)
-    rospy.sleep(0.5)
+    print(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}') # TODO remove (debug)
+    Protocol.wheel_set_speed(wheel1, wheel2, wheel3, wheel4)
+    rospy.sleep(0.1)
 
 
-def machine_path_handler(protocol):     
-    # Start computing of commands here and write on serial bus when new data is available
-    # subscribed to joystick inputs on topic "joy"
-    rospy.Subscriber("control/motorCmd", Int16MultiArray, callback, protocol, queue_size=1)
-    # starts the node
-    # rospy.init_node('motor_node')
-    rospy.spin()
+#def machine_path_handler(protocol): 
+    
 
 if __name__ == '__main__':
     rospy.init_node('motor_node')
@@ -209,5 +205,12 @@ if __name__ == '__main__':
             print("pod_node: Serial port" + str(MCU_PORT) + "couldn't be opened:\n" + str(e))
             time.sleep(3)
 
-    with ReaderThread(port, MachineDesJeuxProtocol) as protocol:
-        machine_path_handler(protocol)
+    # Start computing of commands here and write on serial bus when new data is available
+    # subscribed to joystick inputs on topic "joy"
+    rospy.Subscriber("control/motorCmd", Int16MultiArray, callback, queue_size=1)
+    # starts the node
+    # rospy.init_node('motor_node')
+    rospy.spin()
+
+    #with ReaderThread(port, MachineDesJeuxProtocol) as protocol:
+    #    machine_path_handler(protocol)

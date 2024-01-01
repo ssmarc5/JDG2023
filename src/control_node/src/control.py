@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import rospy
+import math
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Int16MultiArray
 
@@ -16,36 +17,63 @@ OPEN_CLAMP_CMD = 10
 CLOSE_CLAMP_CMD = 11
 CUSTOM_CMD = 20
 
+DEFAULT_SPEED = 0
 MIN_SPEED = -100
 MAX_SPEED = 100
 
-BUTTON_ID_A = 0;
-BUTTON_ID_B = 1;
-BUTTON_ID_X = 2;
-BUTTON_ID_Y = 3;
-BUTTON_ID_LB = 4;
-BUTTON_ID_RB = 5;
-AXIS_ID_LEFT_RIGHT_CROSS = -2;
-AXIS_ID_UP_DOWN_CROSS = -1;
+BUTTON_ID_A  = 0
+BUTTON_ID_B  = 1
+BUTTON_ID_X  = 2
+BUTTON_ID_Y  = 3
+BUTTON_ID_LB = 4
+BUTTON_ID_RB = 5
+
+AXIS_ID_L_STICK_X        = 0
+AXIS_ID_L_STICK_Y        = 1
+AXIS_ID_LT               = 2
+AXIS_ID_R_STICK_X        = 3
+AXIS_ID_R_STICK_Y        = 4
+AXIS_ID_RT               = 5
+AXIS_ID_CROSS_LEFT_RIGHT = 6
+AXIS_ID_CROSS_UP_DOWN    = 7
 
 BUTTON_RELEASED = 0
-BUTTON_PRESSED = 1
-CROSS_LEFT_PRESSED = 1
+BUTTON_PRESSED  = 1
+CROSS_LEFT_PRESSED  = 1
 CROSS_RIGHT_PRESSED = -1
-CROSS_UP_PRESSED = 1
+CROSS_UP_PRESSED   = 1
 CROSS_DOWN_PRESSED = -1
-
 
 # This ROS Node converts Joystick inputs from the joy node
 # into commands for turtlesim or any other robot
 
 def map_range(x, in_min, in_max, out_min, out_max):
-  return int((x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min)
+    return int((x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min)
+
+def get_max(a, b):
+    return a if a > b else b
 
 # Receives joystick messages (subscribed to Joy topic)
 # then converts the joysick inputs into Motor commands
 def callback(data):
     cmd = Int16MultiArray()
+    x   =  data.axes[AXIS_ID_L_STICK_X]
+    y   = -data.axes[AXIS_ID_L_STICK_Y]
+    rot =  data.axes[AXIS_ID_R_STICK_X]
+
+    angle = math.atan2(y, x)# % (2 * math.pi) # FIXME necessaire?
+    offset = math.pi / 4
+    speed = math.hypot(x, y)
+
+    sin = math.sin(angle - offset)
+    cos = math.cos(angle - offset)
+    max = get_max(math.abs(sin), math.abs(cos))
+
+    wheel1_raw = speed * cos / max + rot # avant-gauche
+    wheel2_raw = speed * sin / max - rot # avant-droite
+    wheel3_raw = speed * cos / max - rot # arriere-droite
+    wheel4_raw = speed * sin / max + rot # arriere-gauche
+
     wheel1 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
     wheel2 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
     wheel3 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
@@ -103,36 +131,43 @@ def callback(data):
     #cmd.data = [mode, axe1, axe2, axe3, axe4, axe5, axe6]
     if data.buttons[BUTTON_ID_A] == 1:
         speed = 0
-        cmd.data = [speed, speed, speed, speed]
+        send_button_cmd = True
 
     elif data.buttons[BUTTON_ID_X] == BUTTON_PRESSED:
         speed = 25
-        cmd.data = [speed, speed, speed, speed]
+        send_button_cmd = True
 
     elif data.buttons[BUTTON_ID_Y] == BUTTON_PRESSED:
         speed = 50
-        cmd.data = [speed, speed, speed, speed]
+        send_button_cmd = True
 
     elif data.buttons[BUTTON_ID_B] == BUTTON_PRESSED:
         speed = 75
-        cmd.data = [speed, speed, speed, speed]
+        send_button_cmd = True
 
-    elif data.axes[AXIS_ID_LEFT_RIGHT_CROSS] == CROSS_LEFT_PRESSED:
+    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_LEFT_PRESSED:
         speed = -25
-        cmd.data = [speed, speed, speed, speed]
+        send_button_cmd = True
 
-    elif data.axes[AXIS_ID_UP_DOWN_CROSS] == CROSS_UP_PRESSED:
+    elif data.axes[AXIS_ID_CROSS_UP_DOWN] == CROSS_UP_PRESSED:
         speed = -50
-        cmd.data = [speed, speed, speed, speed]
+        send_button_cmd = True
 
-    elif data.axes[AXIS_ID_LEFT_RIGHT_CROSS] == CROSS_RIGHT_PRESSED:
+    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_RIGHT_PRESSED:
         speed = -75
-        cmd.data = [speed, speed, speed, speed]
+        send_button_cmd = True
 
-    #else:
-        #cmd.data = [wheel1, wheel2, wheel3, wheel4] #FIXME
+    else:
+        send_button_cmd = False
 
-    pub.publish(cmd)
+
+    if send_button_cmd:
+        cmd.data = [speed, speed, speed, speed] #FIXME
+
+    else:
+        cmd.data = [wheel1, wheel2, wheel3, wheel4]
+
+    #pub.publish(cmd) # FIXME uncomment
 
 # Intializes everything
 def start():
