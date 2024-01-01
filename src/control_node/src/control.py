@@ -67,7 +67,7 @@ def callback(data):
 
     sin = m.sin(angle - offset)
     cos = m.cos(angle - offset)
-    max = get_max(abs(sin), abs(cos))
+    max = get_max2(abs(sin), abs(cos))
 
     if speed + abs(rot) > 1:
         correction = 1 / (speed + abs(rot))
@@ -161,11 +161,6 @@ def callback(data):
 #        send_button_cmd = True
     else:
         send_button_cmd = False
-
-#    if send_button_cmd:
-#        cmd.data = [speed, speed, speed, speed] #FIXME
-#    else:
-#        cmd.data = [wheel1, wheel2, wheel3, wheel4]
 
     cmd.data = [wheel1, wheel2, wheel3, wheel4]
     pub.publish(cmd)
