@@ -18,8 +18,9 @@ CLOSE_CLAMP_CMD = 11
 CUSTOM_CMD = 20
 
 DEFAULT_SPEED = 0
-MIN_SPEED = -100
-MAX_SPEED = 100
+
+MAX_SPEED = 40
+MIN_SPEED = -MAX_SPEED
 
 BUTTON_ID_A  = 0
 BUTTON_ID_B  = 1
@@ -57,8 +58,8 @@ def get_max2(a, b):
 # then converts the joysick inputs into Motor commands
 def callback(data):
     cmd = Int16MultiArray()
-    x   =  data.axes[AXIS_ID_L_STICK_X]
-    y   = -data.axes[AXIS_ID_L_STICK_Y]
+    x   = -data.axes[AXIS_ID_L_STICK_X]
+    y   =  data.axes[AXIS_ID_L_STICK_Y]
     rot =  data.axes[AXIS_ID_R_STICK_X]
 
     angle = m.atan2(y, x)# % (2 * m.pi) # FIXME necessaire?
@@ -150,15 +151,18 @@ def callback(data):
     elif data.buttons[BUTTON_ID_B] == BUTTON_PRESSED:
         wheel4 = 20
         send_button_cmd = True
-#    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_LEFT_PRESSED:
-#        speed = -25
-#        send_button_cmd = True
-#    elif data.axes[AXIS_ID_CROSS_UP_DOWN] == CROSS_UP_PRESSED:
-#        speed = -50
-#        send_button_cmd = True
-#    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_RIGHT_PRESSED:
-#        speed = -75
-#        send_button_cmd = True
+    elif data.axes[AXIS_ID_CROSS_UP_DOWN] == CROSS_DOWN_PRESSED:
+        wheel1 = -20
+        send_button_cmd = True
+    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_LEFT_PRESSED:
+        wheel2 = -20
+        send_button_cmd = True
+    elif data.axes[AXIS_ID_CROSS_UP_DOWN] == CROSS_UP_PRESSED:
+        wheel3 = -20
+        send_button_cmd = True
+    elif data.axes[AXIS_ID_CROSS_LEFT_RIGHT] == CROSS_RIGHT_PRESSED:
+        wheel4 = -20
+        send_button_cmd = True
     else:
         send_button_cmd = False
 
