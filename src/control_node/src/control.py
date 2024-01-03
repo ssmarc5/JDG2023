@@ -17,10 +17,16 @@ OPEN_CLAMP_CMD = 10
 CLOSE_CLAMP_CMD = 11
 CUSTOM_CMD = 20
 
-DEFAULT_SPEED = 0
+INPUT_MIN = -1
+INPUT_MAX = 1
 
-MAX_SPEED = 40
-MIN_SPEED = -MAX_SPEED
+DEFAULT_SPEED = 0
+SPEED_MAX = 40
+SPEED_MIN = -SPEED_MAX
+
+PULSE_FREQ_MAX = 133333
+PULSE_FREQ_MIN = -PULSE_FREQ_MAX
+TICKS_PER_US = 2
 
 BUTTON_ID_A  = 0
 BUTTON_ID_B  = 1
@@ -58,6 +64,8 @@ def get_max2(a, b):
 # then converts the joysick inputs into Motor commands
 def callback(data):
     cmd = Int16MultiArray()
+
+    # Contrôle roues mecanum
     x   = -data.axes[AXIS_ID_L_STICK_X]
     y   =  data.axes[AXIS_ID_L_STICK_Y]
     rot =  data.axes[AXIS_ID_R_STICK_X]
@@ -75,26 +83,23 @@ def callback(data):
     else:
         correction = 1
 
-    wheel = (speed * cos + rot) * correction
-
     wheel1_raw = (speed * cos - rot) * correction # avant-gauche
     wheel2_raw = (speed * sin + rot) * correction # avant-droite
     wheel3_raw = (speed * cos + rot) * correction # arriere-droite
     wheel4_raw = (speed * sin - rot) * correction # arriere-gauches
 
-    #wheel1 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
-    #wheel2 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
-    #wheel3 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
-    #wheel4 = map_range(data.axes[1], -1, 1, MIN_SPEED, MAX_SPEED)
+    wheel1 = map_range(wheel1_raw, INPUT_MIN, INPUT_MAX, SPEED_MIN, SPEED_MAX)
+    wheel2 = map_range(wheel2_raw, INPUT_MIN, INPUT_MAX, SPEED_MIN, SPEED_MAX)
+    wheel3 = map_range(wheel3_raw, INPUT_MIN, INPUT_MAX, SPEED_MIN, SPEED_MAX)
+    wheel4 = map_range(wheel4_raw, INPUT_MIN, INPUT_MAX, SPEED_MIN, SPEED_MAX)
 
-    wheel1 = map_range(wheel1_raw, -1, 1, MIN_SPEED, MAX_SPEED)
-    wheel2 = map_range(wheel2_raw, -1, 1, MIN_SPEED, MAX_SPEED)
-    wheel3 = map_range(wheel3_raw, -1, 1, MIN_SPEED, MAX_SPEED)
-    wheel4 = map_range(wheel4_raw, -1, 1, MIN_SPEED, MAX_SPEED)
-
-    #axe4 = map_range(data.axes[4],-1,1,30,-30)
-    #axe6 = map_range(data.axes[5],-1,1,30,0)
-    #seuil = 20
+    # Contrôle stepper
+    if int(data.axes[AXIS_ID_R_STICK_Y]) == 0:
+        step_period_ticks = 0
+    else:
+        step_freq = map_range(data.axes[AXIS_ID_R_STICK_Y], INPUT_MIN, INPUT_MAX, PULSE_FREQ_MIN, PULSE_FREQ_MAX)
+        step_period_us = 1 / step_freq
+        step_period_ticks = TICKS_PER_US * step_period_us
 
 #    if data.buttons[5] == 1:
 #        mode = int(CLOSE_CLAMP_CMD)
@@ -132,7 +137,7 @@ def callback(data):
 #        pub.publish(cmd)
 
     #else:
-        # Le bouton A inverse le sens des gachettes
+    # Le bouton A inverse le sens des gachettes
     #    if data.buttons[0] == 1:
     #        axe3 = -axe3
     #        axe6 = -axe6
@@ -166,7 +171,7 @@ def callback(data):
     else:
         send_button_cmd = False
 
-    cmd.data = [wheel1, wheel2, wheel3, wheel4]
+    cmd.data = [wheel1, wheel2, wheel3, wheel4, step_period_ticks]
     pub.publish(cmd)
 
 # Intializes everything

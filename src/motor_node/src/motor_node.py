@@ -152,12 +152,12 @@ class Protocol:
 #        """
 #        self.write_line('{self.READ_SERVO_AXIS_CFG_CMD}')
 
-    def wheel_set_speed(wheel1, wheel2, wheel3, wheel4):
+    def wheel_set_speed(wheel1, wheel2, wheel3, wheel4, step):
         """
         Envoie vitesse des moteurs des 4 roues
         """
         #self.write_line(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}')
-        port.write(bytes(f"{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}", "ascii"))
+        port.write(bytes(f"{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4},{step:>4}", "ascii"))
 
 def callback(data):
     #print(str(data))
@@ -184,9 +184,9 @@ def callback(data):
     #    protocol.open_clamp()
     #elif val == 11:
     #    protocol.close_clamp()
-    wheel1, wheel2, wheel3, wheel4 = data.data
-    print(f'{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4}') # TODO remove (debug)
-    Protocol.wheel_set_speed(wheel1, wheel2, wheel3, wheel4)
+    wheel1, wheel2, wheel3, wheel4, step = data.data
+    print(f"{wheel1:>4},{wheel2:>4},{wheel3:>4},{wheel4:>4},{step:>4}") # TODO remove (debug)
+    Protocol.wheel_set_speed(wheel1, wheel2, wheel3, wheel4, step)
     rospy.sleep(0.1)
 
 
